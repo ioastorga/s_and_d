@@ -9,9 +9,9 @@ from skimage import data
 from skimage.feature import blob_log
 from skimage.color import rgb2gray, label2rgb
 from skimage.measure import label, regionprops,find_contours
-from skimage.filters import gaussian, threshold_otsu
-from skimage.morphology import dilation, erosion
-from scipy import ndimage as ndi
+from skimage.filters import gaussian, threshold_otsu, difference_of_gaussians
+#from skimage.morphology import dilation, erosio
+#from scipy import ndimage as ndi
 #############
 # IMAGE
 #############
@@ -19,14 +19,12 @@ from scipy import ndimage as ndi
 img_stars = data.hubble_deep_field()[0:500, 0:500]
 stars_gray = rgb2gray(img_stars)
 # Original image
-plt.imshow(stars_gray, cmap=plt.cm.gray)
+# plt.imshow(stars_gray, cmap=plt.cm.gray)
 
 #############
 # BLOB DETECTION
 #############
-
 blobs_log = blob_log(stars_gray, min_sigma = 1, max_sigma=30, num_sigma=50, threshold=.1)
-plt.figure()
 #n, bins, patches = plt.hist(blobs_log[:, 2], 50)
 #print("Number of sigma counted : " ,bins)
 # Compute radii in the 3rd column.
@@ -35,30 +33,28 @@ numrows = len(blobs_log)
 print("Number of blobs counted : " ,numrows)
 # Show image with stars detected
 fig, ax = plt.subplots(1,1)
-mask = np.zeros_like(stars_gray)
+plt.imshow(stars_gray, cmap = plt.cm.gray)
+# mask = np.zeros_like(stars_gray)
 for blob in blobs_log:
     y, x, r = blob
     c = plt.Circle((x, y), r, color='lime', linewidth=1, fill=False)
     ax.add_patch(c)
-plt.imshow(mask, cmap = plt.cm.gray)
+# plt.imshow(mask, cmap = plt.cm.gray)
+# plt.figure()
+# n, bins, patches = plt.hist(blobs_log[:, 2])
 
-plt.figure()
-n, bins, patches = plt.hist(blobs_log[:, 2])
 #############
 # LABEL DETECTION
 #############
-
 #dilate to avoid loosing small elements on edges
 #image_dil = dilation(stars_gray, np.ones((5,5)))
 #make the image smooth
 #image_gauss = gaussian(stars_gray, sigma=1.5)
 #automatic threshold
-image_th = threshold_otsu(stars_gray)
+stars_filtered = difference_of_gaussians(stars_gray, low_sigma = 1, high_sigma=7)
+#print("mean values : " ,stars_gray.mean())
 #find contour
-contours = find_contours(stars_gray, level = 0.1)
-
-# Find contours at a constant value of 0.8
-#contours = find_contours(stars_gray, 0.3)
+contours = find_contours(stars_filtered, level = 0.1)
 
 # Display the image and plot all contours found
 fig_c, ax_c = plt.subplots()
